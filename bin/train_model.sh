@@ -15,7 +15,7 @@ context=False
 combine=16
 iterations=10
 shuffle=False
-parentdir=/local/var/$USER/pacrr
+parentdir=.
 outdir=$parentdir
 
 python -m train_model with\

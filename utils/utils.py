@@ -37,21 +37,23 @@ def _load_doc_mat_desc(qids, qid_cwid_label, doc_mat_dir, qid_topic_idf, qid_des
     
     qid_cwid_simmat = dict()
     qid_term_idf = dict()
+    # print(qid_topic_idf)
     for qid in sorted(qids):
         if qid not in qid_cwid_label:
             logger.error('%d not in qid_cwid_label'%qid)
             continue
         qid_cwid_simmat[qid]=dict()
 
-        topic_idf_arr, desc_idf_arr = qid_topic_idf[qid], qid_desc_idf[qid]
+        topic_idf_arr= qid_topic_idf[qid]
         descmax = maxqlen
-        didxs = list(range(len(desc_idf_arr)))
         mi = []
         if usetopic:
             assert len(topic_idf_arr) <= maxqlen, "maxqlen must be >= all topic lens"
             descmax = maxqlen - len(topic_idf_arr)
             mi.append(topic_idf_arr)
         if usedesc:
+            desc_idf_arr = qid_desc_idf[qid]
+            didxs = list(range(len(desc_idf_arr)))
             if len(didxs) > descmax:
                 logger.warning("%s: desc len %s > desc max %s; removing low idf terms" % (qid, len(didxs), descmax))
                 didxs = np.sort(np.argsort(desc_idf_arr)[::-1][:descmax])
@@ -70,7 +72,8 @@ def _load_doc_mat_desc(qids, qid_cwid_label, doc_mat_dir, qid_topic_idf, qid_des
             if h5 is not None and cwid not in docmap_t:
                 logger.error('topic %s not exist.'%cwid)
             elif h5 is None and not os.path.isfile(topic_cwid_f):
-                logger.error('%s not exist.'%topic_cwid_f)
+                pass
+                # logger.error('%s not exist.'%topic_cwid_f)
             elif usetopic:
                 if h5 is None:
                     topic_mat = np.load(topic_cwid_f)
@@ -79,6 +82,7 @@ def _load_doc_mat_desc(qids, qid_cwid_label, doc_mat_dir, qid_topic_idf, qid_des
                 if len(topic_mat.shape) != 2:
                     logger.warning('topic_mat {0} {1} {2}'.format(qid, cwid, topic_mat.shape))
                     continue
+            '''
             if h5 is not None and cwid not in docmap_d:
                 logger.error('desc %s not exist.'%cwid)
             elif h5 is None and not os.path.isfile(desc_cwid_f):
@@ -91,6 +95,7 @@ def _load_doc_mat_desc(qids, qid_cwid_label, doc_mat_dir, qid_topic_idf, qid_des
                 if len(desc_mat.shape) != 2:
                     logger.warning('desc_mat {0} {1} {2}'.format(qid, cwid, desc_mat.shape))
                     continue
+            '''
             #if topic_mat.shape[1] == desc_mat.shape[1] and topic_mat.shape[1]>0:
             empty = True
             m = []
@@ -107,8 +112,8 @@ def _load_doc_mat_desc(qids, qid_cwid_label, doc_mat_dir, qid_topic_idf, qid_des
             if not empty:
                 qid_cwid_simmat[qid][cwid] = np.concatenate(m, axis=0).astype(np.float32)
 
-            else:
-                logger.error('dimension mismatch {0} {1} {2} {3}'.format(qid, cwid, topic_mat.shape, desc_mat.shape))
+            # else:
+            #    logger.error('dimension mismatch {0} {1} {2} {3}'.format(qid, cwid, topic_mat.shape, desc_mat.shape))
 
     if h5 is not None:
         h5.close()
@@ -121,11 +126,11 @@ def load_query_idf(qids, doc_mat_dir):
     qid_topic_idf = dict()
     qid_desc_idf = dict()
     for qid in qids:
-        if not os.path.isfile(idfdir_topic + '/%d.npy'%qid) or not os.path.isfile(idfdir_desc + '/%d.npy'%qid):
-            logger.error('%d in %s or %s not exist'%(qid, idfdir_topic,idfdir_desc))
+        if not os.path.isfile(idfdir_topic + '/%d.npy'%qid):
+            logger.error('%d in %s not exist'%(qid, idfdir_topic))
             continue
         qid_topic_idf[qid] = np.load(idfdir_topic + '/%d.npy'%qid)
-        qid_desc_idf[qid] = np.load(idfdir_desc + '/%d.npy'%qid)
+        # qid_desc_idf[qid] = np.load(idfdir_desc + '/%d.npy'%qid)
     return qid_topic_idf, qid_desc_idf
 
 
@@ -153,6 +158,12 @@ def convert_cwid_udim_simmat(qids, qid_cwid_rmat, select_pos_func, \
         for cwid in qid_cwid_rmat[qid]:
             len_doc = qid_cwid_rmat[qid][cwid].shape[1]
             len_query = qid_cwid_rmat[qid][cwid].shape[0]
+            # assert qid_cwid_rmat[qid][cwid].shape[0] == len(qid_term_idf[qid])
+            if not qid_cwid_rmat[qid][cwid].shape[0] == len(qid_term_idf[qid]):
+                print(qid, cwid, qid_cwid_rmat[qid][cwid].shape[0], qid_term_idf[qid].shape())
+            # else:
+            #    print("length match")
+            # len_query = len(qid_term_idf[qid])
             if qid not in qid_ext_idfarr:
                 qid_ext_idfarr[qid] =  np.pad(qid_term_idf[qid],\
                         pad_width=((0,max_query_term-len_query)),\
@@ -394,7 +405,7 @@ def load_test_data(qids, rawdoc_mat_dir, qid_cwid_label, N_GRAMS, param_val):
     select_pos_func = getattr(select_doc_pos, 'select_pos_%s'%POS_METHOD)
     qid_topic_idf, qid_desc_idf = load_query_idf(qids, rawdoc_mat_dir)
     qid_cwid_rmat, qid_term_idf = _load_doc_mat_desc(qids, qid_cwid_label, rawdoc_mat_dir, qid_topic_idf, \
-            qid_desc_idf, usetopic=param_val['ut'], usedesc=param_val['ud'], maxqlen=MAX_QUERY_LENGTH)
+               qid_desc_idf, usetopic=param_val['ut'], usedesc=param_val['ud'], maxqlen=MAX_QUERY_LENGTH)
 
     qid_cwid_rqexpmat = None
     qid_cwid_mat, qid_ext_idfarr, qid_context = convert_cwid_udim_simmat(qids, qid_cwid_rmat, select_pos_func, qid_term_idf, qid_cwid_rqexpmat,
@@ -424,14 +435,18 @@ def load_test_data(qids, rawdoc_mat_dir, qid_cwid_label, N_GRAMS, param_val):
                 doc_vec[wlen].append(qid_cwid_mat[qid][wlen][cwid]) 
 
     getmat = lambda x: np.array(x)
-        
+    #for qid in qid_cwid_mat:
+    #    for wlen in qid_cwid_mat[qid]:
+    #        for cwid in qid_cwid_mat[qid][wlen]:
+    #            print(qid, wlen, cwid, qid_cwid_mat[qid][wlen][cwid].shape)
     test_data = {'doc_wlen_%d'%wlen: np.array(getmat(doc_vec[wlen])) for wlen in doc_vec}
 
     if binarysimm:
         for k in test_data:
             assert k.find("_wlen_") != -1, "data contains non-simmat objects"
             test_data[k] = (test_data[k] >= 0.999).astype(np.int8)
-
+    #for q_idf in q_idfs:
+    #    print(q_idf.shape)
     q_idfs = np.concatenate(q_idfs, axis=0)
     logger.info('Test data: {0} {1} {2}'.format([(wlen, getmat(doc_vec[wlen]).shape) for wlen in doc_vec], q_idfs.shape, len(cwids)))
     test_data['query_idf']=q_idfs

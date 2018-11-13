@@ -90,7 +90,6 @@ def print_run(qid_cwid_pred, outdir, outfname, run_id):
 @ex.automain
 def pred(_log, _config):
     p = _config
-
     modelname = file2name[p['modelfn']]
     mod_model = importlib.import_module('models.%s' % p['modelfn'])
     model_cls = getattr(mod_model, modelname)

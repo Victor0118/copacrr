@@ -17,7 +17,8 @@ context=False
 combine=16
 iterations=10
 shuffle=False
-parentdir=/local/var/$USER/pacrr
+#parentdir=/local/var/$USER/pacrr
+parendir=.
 outdir=$parentdir
 
 

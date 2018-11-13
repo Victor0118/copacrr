@@ -4,12 +4,11 @@ import itertools
 import os
 import sys
 import time
-all_years = ['09', '10', '11', '12', '13', '14']
-#train_test_years = {'wt12_13':['wt11', 'wt14']}
-train_test_years = {'wt' + '_'.join(sorted(years)):
-        sorted(['wt' + ty for ty in all_years if ty not in years])
+all_years = ['11', '12', '13', '14']
+#train_test_years = {'mb12_13':['mb11', 'mb14']}
+train_test_years = {'mb' + '_'.join(sorted(years)):
+        sorted(['mb' + ty for ty in all_years if ty not in years])
         for years in itertools.combinations(all_years, 4)}
-
 
 # modelfile-modelname
 file2name = {'pacrr':'PACRR', 'matchpyramid':'MatchPyramid', 'duetl':'DUETL',
@@ -57,7 +56,8 @@ rawdoc_mat_dir/query_idf/desc_term_idf/1.npy
 rawdoc_mat_dir/query_idf/topic_term_idf/1.npy
 '''
 # the directory helds the similarity matrices 
-sim_dir="/local/var/tmp/%s" % getpass.getuser()
+#sim_dir="/local/var/tmp/%s" % getpass.getuser()
+sim_dir="/mnt/collections/w85yang"
 rawdoc_mat_dir=os.path.join(sim_dir, 'cosine')
 #"/directory to the pre-computed similarity matrices/"
 # the mat for the context needs to be pre-computed if context=True
@@ -76,25 +76,25 @@ eval_trec_run_basedir=os.path.join(cur_dir, "data", "eval_trec_runs")
 def default_params():
     expname = "debug" # experiment name
     modelfn = "pacrr" # model to run
-    train_years = "wt09_10_11_12" # years to train on
-    test_year = "wt13" # year to predict on
+    train_years = "mb11_12_13" # years to train on
+    test_year = "mb14" # year to predict on
     seed = 7541
     parentdir = '/user/%s'% getpass.getuser()
     outdir = '/user/%s'% getpass.getuser()
 
-    simdim = 800 # length of document dimension
+    simdim = 60 # length of document dimension
     binmat = False # use binary similarity matrices? (boolean)
     numneg = 1 # number of non-relevant docs in softmax
-    batch = 16 # batch size
+    batch = 2 # batch size
     epochs = 150 # number of iterations to run
     nsamples = 2048 # samples per epoch
     maxqlen = 16 # maximum query length
     
     distill = "firstk" # similarity matrix distillation method
-    nfilter = 32 # number of filters to use for the n-gram convolutions
-    winlen = 3 # maximum n-gram length
+    nfilter = 8 # number of filters to use for the n-gram convolutions
+    winlen = 2 # maximum n-gram length
     kmaxpool = 3 # top k for max pooling
-    combine = 32 # type of combination layer to use. 0 for an LSTM, otherwise the number of feedforward layer dimensions
+    combine = 16 # type of combination layer to use. 0 for an LSTM, otherwise the number of feedforward layer dimensions
     qproximity = 0 # additional NxN proximity filter to include (0 to disable)
     context = True # include match contexts? (boolean)
     shuffle = True # shuffle input to the combination layer? (i.e., LSTM or feedforward layer)
@@ -119,7 +119,7 @@ def default_params():
     drmmdense = 5
 
     ut = True # use topics in queries
-    ud = True # use descriptions in queries
+    ud = False # use descriptions in queries
 
     if 'debug' in expname:
         epochs = 5
