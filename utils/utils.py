@@ -160,7 +160,7 @@ def convert_cwid_udim_simmat(qids, qid_cwid_rmat, select_pos_func, \
             len_query = qid_cwid_rmat[qid][cwid].shape[0]
             # assert qid_cwid_rmat[qid][cwid].shape[0] == len(qid_term_idf[qid])
             if not qid_cwid_rmat[qid][cwid].shape[0] == len(qid_term_idf[qid]):
-                print(qid, cwid, qid_cwid_rmat[qid][cwid].shape[0], qid_term_idf[qid].shape())
+                print(qid, cwid, qid_cwid_rmat[qid][cwid].shape[0], qid_term_idf[qid].shape)
             # else:
             #    print("length match")
             # len_query = len(qid_term_idf[qid])
